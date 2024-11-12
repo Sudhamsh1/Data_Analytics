@@ -1,0 +1,1063 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyNRtRhyi78+aV2HE/MdVA/C",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Sudhamsh1/Data_Analytics/blob/main/Pyspark%20Interview%20Questions%20and%20Answers\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "5KtUswUFJSBg",
+        "outputId": "69e629c2-3793-44b8-f097-13620f57df87"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: pyspark in /usr/local/lib/python3.10/dist-packages (3.5.3)\n",
+            "Requirement already satisfied: py4j==0.10.9.7 in /usr/local/lib/python3.10/dist-packages (from pyspark) (0.10.9.7)\n"
+          ]
+        }
+      ],
+      "source": [
+        "pip install pyspark"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from pyspark.sql import SparkSession\n",
+        "from pyspark.sql.functions import *\n",
+        "from pyspark.sql.window import Window\n",
+        "from pyspark.sql.types import *\n"
+      ],
+      "metadata": {
+        "id": "oCJJDPY4JSpv"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sp=SparkSession.builder.appName('test').getOrCreate()\n",
+        "data=([1,'Sudhamsh','Data',65000],[2,'Tanvi','Automation',54000],[3,'Pavan','Automation',40000],[1,'Sudhamsh','Data',65000],[4,'Satish','Data',80000],[2,'Tanvi','Automation',54000],[\"\",'Viren',\"\",45000])\n",
+        "df=sp.createDataFrame(data,['id','name','dept','salary'])\n",
+        "df.show()\n",
+        "df1=df.dropDuplicates()\n",
+        "df1.show()\n",
+        "res=df.join(df1,df.id==df1.id,'left')\n",
+        "res.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "PLd_8htJJSsj",
+        "outputId": "26b68ddf-864b-4f09-94d8-74940d7af2e2"
+      },
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+---+--------+----------+------+\n",
+            "| id|    name|      dept|salary|\n",
+            "+---+--------+----------+------+\n",
+            "|  1|Sudhamsh|      Data| 65000|\n",
+            "|  2|   Tanvi|Automation| 54000|\n",
+            "|  3|   Pavan|Automation| 40000|\n",
+            "|  1|Sudhamsh|      Data| 65000|\n",
+            "|  4|  Satish|      Data| 80000|\n",
+            "|  2|   Tanvi|Automation| 54000|\n",
+            "|   |   Viren|          | 45000|\n",
+            "+---+--------+----------+------+\n",
+            "\n",
+            "+---+--------+----------+------+\n",
+            "| id|    name|      dept|salary|\n",
+            "+---+--------+----------+------+\n",
+            "|  2|   Tanvi|Automation| 54000|\n",
+            "|  1|Sudhamsh|      Data| 65000|\n",
+            "|  3|   Pavan|Automation| 40000|\n",
+            "|   |   Viren|          | 45000|\n",
+            "|  4|  Satish|      Data| 80000|\n",
+            "+---+--------+----------+------+\n",
+            "\n",
+            "+---+--------+----------+------+---+--------+----------+------+\n",
+            "| id|    name|      dept|salary| id|    name|      dept|salary|\n",
+            "+---+--------+----------+------+---+--------+----------+------+\n",
+            "|  3|   Pavan|Automation| 40000|  3|   Pavan|Automation| 40000|\n",
+            "|  1|Sudhamsh|      Data| 65000|  1|Sudhamsh|      Data| 65000|\n",
+            "|  2|   Tanvi|Automation| 54000|  2|   Tanvi|Automation| 54000|\n",
+            "|  1|Sudhamsh|      Data| 65000|  1|Sudhamsh|      Data| 65000|\n",
+            "|  4|  Satish|      Data| 80000|  4|  Satish|      Data| 80000|\n",
+            "|   |   Viren|          | 45000|   |   Viren|          | 45000|\n",
+            "|  2|   Tanvi|Automation| 54000|  2|   Tanvi|Automation| 54000|\n",
+            "+---+--------+----------+------+---+--------+----------+------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "r=df.select((when(df.id==\"\",None).otherwise(df.id)).alias('ID'))\n",
+        "r=r.coalesce(1).alias('ID')\n",
+        "r.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "V6tL6IzJJSvt",
+        "outputId": "fa509620-65ba-40af-b0de-a190c7718d67"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----+\n",
+            "|  ID|\n",
+            "+----+\n",
+            "|   1|\n",
+            "|   2|\n",
+            "|   3|\n",
+            "|   1|\n",
+            "|   4|\n",
+            "|   2|\n",
+            "|NULL|\n",
+            "+----+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "et6fbFrTtWDN"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# New Section"
+      ],
+      "metadata": {
+        "id": "hmf_7xudutUa"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "**Cloud Challengers Channel Databricks and pyspark interview coding questions 1 to 10**\n",
+        "\n",
+        "https://www.youtube.com/watch?v=D71n1wKrmNQ&list=PLxHEfsUVhEwMvQBr10rrpEsnwT3AXBKke&index=2"
+      ],
+      "metadata": {
+        "id": "h8ryeSQAtKIq"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 1\n",
+        "df4=sp.createDataFrame((['Goa',\"\",None],[\"\",\"AP\",None],[None,\"\",\"Bglr\"]),['city1','city2','city3'])\n",
+        "df4.show()\n",
+        "df5=df4.select(coalesce(df4.city1,df4.city2,df4.city3))\n",
+        "df5=df4.select(coalesce(when(df4.city1==\"\",None).otherwise(df4.city1),\n",
+        "                        when(df4.city2==\"\",None).otherwise(df4.city2),\n",
+        "                        when(df4.city3==\"\",None).otherwise(df4.city3)).alias('City'))\n",
+        "df5.show()\n",
+        "\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MOwVaRkWUDEg",
+        "outputId": "ddc2d94e-943a-4b5e-e758-81ab563fc427"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+-----+-----+\n",
+            "|city1|city2|city3|\n",
+            "+-----+-----+-----+\n",
+            "|  Goa|     | NULL|\n",
+            "|     |   AP| NULL|\n",
+            "| NULL|     | Bglr|\n",
+            "+-----+-----+-----+\n",
+            "\n",
+            "+----+\n",
+            "|City|\n",
+            "+----+\n",
+            "| Goa|\n",
+            "|  AP|\n",
+            "|Bglr|\n",
+            "+----+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 2\n",
+        "\n",
+        "data=(['Suresh,Ramesh','India'],['Pavan,Rohan','Indonesia'])\n",
+        "df2=sp.createDataFrame(data,['name','country'])\n",
+        "df2.show()\n",
+        "df3=df2.select(explode(split(df2.name,',')).alias('name'),col('country'))\n",
+        "df3.show()\n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "wQWj_PHHJSyu",
+        "outputId": "e4718c15-4ee6-447d-edbf-f8da67a17fd7"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-------------+---------+\n",
+            "|         name|  country|\n",
+            "+-------------+---------+\n",
+            "|Suresh,Ramesh|    India|\n",
+            "|  Pavan,Rohan|Indonesia|\n",
+            "+-------------+---------+\n",
+            "\n",
+            "+------+---------+\n",
+            "|  name|  country|\n",
+            "+------+---------+\n",
+            "|Suresh|    India|\n",
+            "|Ramesh|    India|\n",
+            "| Pavan|Indonesia|\n",
+            "| Rohan|Indonesia|\n",
+            "+------+---------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 3\n",
+        "from pyspark.sql import SparkSession\n",
+        "from pyspark.sql.functions import col, explode, split\n",
+        "from pyspark.sql.types import StructType, StructField, StringType, IntegerType\n",
+        "\n",
+        "sp=SparkSession.builder.appName('test').getOrCreate()\n",
+        "\n",
+        "schema = StructType([\n",
+        "    StructField(\"player\", StringType(), True),\n",
+        "    StructField(\"runs\", IntegerType(), True),\n",
+        "    StructField(\"50s/100s\", StringType(), True)\n",
+        "])\n",
+        "\n",
+        "data = [(\"Sachin-IND\", 18694, \"93/49\"), (\"Ricky-AUS\", 11274, \"66/31\"),(\"Lara-WI\", 10222, \"45/21\"),(\"Rahul-IND\", 10355, \"95/11\"),(\"Jhonty-SA\", 7051, \"43/5\"),(\"Hayden-AUS\", 8722, \"67/19\")]\n",
+        "players_df = sp.createDataFrame(data, schema)\n",
+        "\n",
+        "data1 = [(\"IND\", \"India\"), (\"AUS\", \"Australia\"), (\"WI\", \"WestIndies\"), (\"SA\", \"SouthAfrica\")]\n",
+        "countries_df = sp.createDataFrame(data1,[\"SRT\",\"country\"])\n",
+        "\n",
+        "players_df.show()\n",
+        "\n",
+        "new=players_df.withColumn(\"SRT\",split(col(\"Player\"),'-').getItem(1))\\\n",
+        "              .withColumn(\"Player\",split(col(\"Player\"),'-').getItem(0))\\\n",
+        "              .withColumn(\"50s\",split(col(\"50s/100s\"),'/').getItem(1))\\\n",
+        "              .withColumn(\"100s\",split(col(\"50s/100s\"),'/').getItem(0))\\\n",
+        "              .withColumn(\"Sum\",col('50s')+col('100s'))\\\n",
+        "              .select('player','runs','SRT','Sum').filter(col('sum')>90)\n",
+        "new.show()\n",
+        "\n",
+        "\n",
+        "res=new.join(countries_df,new.SRT==countries_df.SRT,'left').drop('SRT')\n",
+        "res.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "twN02aJGJS1s",
+        "outputId": "7faad80e-597f-4527-f9f0-74fd746b2872"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----------+-----+--------+\n",
+            "|    player| runs|50s/100s|\n",
+            "+----------+-----+--------+\n",
+            "|Sachin-IND|18694|   93/49|\n",
+            "| Ricky-AUS|11274|   66/31|\n",
+            "|   Lara-WI|10222|   45/21|\n",
+            "| Rahul-IND|10355|   95/11|\n",
+            "| Jhonty-SA| 7051|    43/5|\n",
+            "|Hayden-AUS| 8722|   67/19|\n",
+            "+----------+-----+--------+\n",
+            "\n",
+            "+------+-----+---+-----+\n",
+            "|player| runs|SRT|  Sum|\n",
+            "+------+-----+---+-----+\n",
+            "|Sachin|18694|IND|142.0|\n",
+            "| Ricky|11274|AUS| 97.0|\n",
+            "| Rahul|10355|IND|106.0|\n",
+            "+------+-----+---+-----+\n",
+            "\n",
+            "+------+-----+-----+---------+\n",
+            "|player| runs|  Sum|  country|\n",
+            "+------+-----+-----+---------+\n",
+            "| Ricky|11274| 97.0|Australia|\n",
+            "|Sachin|18694|142.0|    India|\n",
+            "| Rahul|10355|106.0|    India|\n",
+            "+------+-----+-----+---------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#qUESTION4\n",
+        "df=sp.read.option('header',True).option('infershema',True).option('mode',\"DROPMALFORMED\").csv('/content/employees.csv')\n",
+        "df.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Ns_2stD1JS40",
+        "outputId": "21741a12-1f81-476d-cd4b-686b038e7e70"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+-------+---------+\n",
+            "|empid|empname|  address|\n",
+            "+-----+-------+---------+\n",
+            "|  101| Ashish|    Delhi|\n",
+            "|  102|    Ram|Bangalore|\n",
+            "|  105| Watson|     Pune|\n",
+            "+-----+-------+---------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#qUESTION 6\n",
+        "schema = StructType([\n",
+        "    StructField(\"reqid\", IntegerType(), True),\n",
+        "    StructField(\"pickup_location\", StringType(), True)\n",
+        "])\n",
+        "\n",
+        "\n",
+        "data = [(48, \"Airport\"), (49, \"Office\"),(50, \"Hospital\"),(51, \"Airport\"),(52, \"Hospital\"),(53, \"Shoppingmall\"),(54, \"Office\"),(55, \"Hospital\"),(56, \"Hospital\")]\n",
+        "pickup_df = sp.createDataFrame(data, schema)\n",
+        "pickup_df.show()\n",
+        "\n",
+        "\n",
+        "res=pickup_df.groupBy('pickup_location').count().orderBy(col('count').desc())\n",
+        "res.limit(3).show()\n",
+        "\n",
+        "\n",
+        "#Approach 2\n",
+        "\n",
+        "w=Window.partitionBy('pickup_location').orderBy(col('pickup_location').desc())\n",
+        "new=pickup_df.withColumn(\"rn\",row_number().over(w))\n",
+        "new=new.groupBy('pickup_location').agg(max('rn').alias('rn')).limit(3)\n",
+        "new.show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ipnawX0vrOMN",
+        "outputId": "aa0efa42-2df1-4e43-b5cc-0dc25641c596"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+---------------+\n",
+            "|reqid|pickup_location|\n",
+            "+-----+---------------+\n",
+            "|   48|        Airport|\n",
+            "|   49|         Office|\n",
+            "|   50|       Hospital|\n",
+            "|   51|        Airport|\n",
+            "|   52|       Hospital|\n",
+            "|   53|   Shoppingmall|\n",
+            "|   54|         Office|\n",
+            "|   55|       Hospital|\n",
+            "|   56|       Hospital|\n",
+            "+-----+---------------+\n",
+            "\n",
+            "+---------------+-----+\n",
+            "|pickup_location|count|\n",
+            "+---------------+-----+\n",
+            "|       Hospital|    4|\n",
+            "|         Office|    2|\n",
+            "|        Airport|    2|\n",
+            "+---------------+-----+\n",
+            "\n",
+            "+---------------+---+\n",
+            "|pickup_location| rn|\n",
+            "+---------------+---+\n",
+            "|        Airport|  2|\n",
+            "|       Hospital|  4|\n",
+            "|         Office|  2|\n",
+            "+---------------+---+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "schema = StructType([\n",
+        "    StructField(\"reqid\", IntegerType(), True),\n",
+        "    StructField(\"pickup_location\", StringType(), True)\n",
+        "])\n",
+        "\n",
+        "\n",
+        "data = [(48, \"Airport\"), (49, \"Office\"),(50, \"Hospital\"),(51, \"Airport\"),(52, \"Hospital\"),(53, \"Shoppingmall\"),(54, \"Office\"),(55, \"Hospital\"),(56, \"Hospital\")]\n",
+        "pickup_df = sp.createDataFrame(data, schema)\n",
+        "pickup_df.show()\n",
+        "\n",
+        "df=pickup_df.groupBy('pickup_location').count().orderBy(col('count').desc()).limit(3)\n",
+        "df.show()\n",
+        "\n",
+        "df1=pickup_df.withColumn('rn',row_number().over(Window.partitionBy('pickup_location').orderBy(col('pickup_location').desc())))\n",
+        "df1.groupBy('pickup_location').agg(max('rn').alias('rn')).limit(3).show()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "n-EYEMqNrNcR",
+        "outputId": "e8c41b6e-5878-4250-b4e2-ea859bb2f4b0"
+      },
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+---------------+\n",
+            "|reqid|pickup_location|\n",
+            "+-----+---------------+\n",
+            "|   48|        Airport|\n",
+            "|   49|         Office|\n",
+            "|   50|       Hospital|\n",
+            "|   51|        Airport|\n",
+            "|   52|       Hospital|\n",
+            "|   53|   Shoppingmall|\n",
+            "|   54|         Office|\n",
+            "|   55|       Hospital|\n",
+            "|   56|       Hospital|\n",
+            "+-----+---------------+\n",
+            "\n",
+            "+---------------+-----+\n",
+            "|pickup_location|count|\n",
+            "+---------------+-----+\n",
+            "|       Hospital|    4|\n",
+            "|         Office|    2|\n",
+            "|        Airport|    2|\n",
+            "+---------------+-----+\n",
+            "\n",
+            "+---------------+---+\n",
+            "|pickup_location| rn|\n",
+            "+---------------+---+\n",
+            "|        Airport|  2|\n",
+            "|       Hospital|  4|\n",
+            "|         Office|  2|\n",
+            "+---------------+---+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "data = [\n",
+        "    (100, 'IT', 100, '2024-05-12'),\n",
+        "    (200, 'IT', 100, '2024-06-12'),\n",
+        "    (100, 'FIN', 400, '2024-07-12'),\n",
+        "    (300, 'FIN', 500, '2024-07-12'),\n",
+        "    (300, 'FIN', 1543, '2024-07-12'),\n",
+        "    (300, 'FIN', 1500, '2024-07-12')\n",
+        "]\n",
+        "\n",
+        "\n",
+        "columns = [\"empid\", \"dept\", \"salary\", \"date\"]\n",
+        "df = sp.createDataFrame(data, columns)\n",
+        "df.show()\n",
+        "\n",
+        "df1=df.groupBy('empid').count().filter(col('count')==1)\n",
+        "df1.show()\n",
+        "dff=df1.join(df,df1.empid==df.empid,'left').drop('count').drop(df1.empid)\n",
+        "dff.show()"
+      ],
+      "metadata": {
+        "id": "K4j1UquUrNnv",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "47627e9b-f47e-4384-ea9d-fd9bcd73cad1"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+----+------+----------+\n",
+            "|empid|dept|salary|      date|\n",
+            "+-----+----+------+----------+\n",
+            "|  100|  IT|   100|2024-05-12|\n",
+            "|  200|  IT|   100|2024-06-12|\n",
+            "|  100| FIN|   400|2024-07-12|\n",
+            "|  300| FIN|   500|2024-07-12|\n",
+            "|  300| FIN|  1543|2024-07-12|\n",
+            "|  300| FIN|  1500|2024-07-12|\n",
+            "+-----+----+------+----------+\n",
+            "\n",
+            "+-----+-----+\n",
+            "|empid|count|\n",
+            "+-----+-----+\n",
+            "|  200|    1|\n",
+            "+-----+-----+\n",
+            "\n",
+            "+-----+----+------+----------+\n",
+            "|empid|dept|salary|      date|\n",
+            "+-----+----+------+----------+\n",
+            "|  200|  IT|   100|2024-06-12|\n",
+            "+-----+----+------+----------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 8\n",
+        "\n",
+        "from pyspark.sql.functions import col, when\n",
+        "d=([123],['Sam'],[4353],['kiran'],[2454],['ajay'],[45354])\n",
+        "df=sp.createDataFrame(d,['empid'])\n",
+        "df.show()\n",
+        "\n",
+        "df=df.filter(col('empid').cast('int').isNotNull())\n",
+        "df.show()\n",
+        "\n",
+        "#SQL Approach\n",
+        "\n",
+        "df.createOrReplaceTempView(\"table\")\n",
+        "\n",
+        "new_df=sp.sql(\"select * from table where cast(empid as int) is not null\")\n",
+        "new_df.show()\n",
+        "\n",
+        "\n",
+        "#\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "Wl0o7oJ2rNr3",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "6210752d-8937-4fc0-cd37-7212a5a8dd1a"
+      },
+      "execution_count": 19,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+\n",
+            "|empid|\n",
+            "+-----+\n",
+            "|  123|\n",
+            "|  Sam|\n",
+            "| 4353|\n",
+            "|kiran|\n",
+            "| 2454|\n",
+            "| ajay|\n",
+            "|45354|\n",
+            "+-----+\n",
+            "\n",
+            "+-----+\n",
+            "|empid|\n",
+            "+-----+\n",
+            "|  123|\n",
+            "| 4353|\n",
+            "| 2454|\n",
+            "|45354|\n",
+            "+-----+\n",
+            "\n",
+            "+-----+\n",
+            "|empid|\n",
+            "+-----+\n",
+            "|  123|\n",
+            "| 4353|\n",
+            "| 2454|\n",
+            "|45354|\n",
+            "+-----+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 9\n",
+        "\n",
+        "data = [(\"virat kohli\",), (\"p v sindhu\",)]\n",
+        "\n",
+        "\n",
+        "columns = [\"name\"]\n",
+        "df = sp.createDataFrame(data, columns)\n",
+        "\n",
+        "df.show()\n",
+        "df=df.withColumn(\"name\",initcap(col('name')))\n",
+        "df.show()\n",
+        "\n"
+      ],
+      "metadata": {
+        "id": "NZ0LN1fDrNuX",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "6f7da67f-5e64-4789-d1a6-88af46378539"
+      },
+      "execution_count": 21,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----------+\n",
+            "|       name|\n",
+            "+-----------+\n",
+            "|virat kohli|\n",
+            "| p v sindhu|\n",
+            "+-----------+\n",
+            "\n",
+            "+-----------+\n",
+            "|       name|\n",
+            "+-----------+\n",
+            "|Virat Kohli|\n",
+            "| P V Sindhu|\n",
+            "+-----------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 10\n",
+        "\n",
+        "data1 = [(1, 'Bob'), (2, 'Alice'), (3, 'Tom')]\n",
+        "data2 = [(1, 'Bob'), (3, 'Tom')]\n",
+        "\n",
+        "\n",
+        "df1 = sp.createDataFrame(data1, [\"id\", \"name\"])\n",
+        "df2 = sp.createDataFrame(data2, [\"id\", \"name\"])\n",
+        "\n",
+        "diff=df1.exceptAll(df2)\n",
+        "diff.show()"
+      ],
+      "metadata": {
+        "id": "3Ni5cVO7rNxR",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "2b9ef175-6096-495d-b5a1-61331b4624e6"
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+---+-----+\n",
+            "| id| name|\n",
+            "+---+-----+\n",
+            "|  2|Alice|\n",
+            "+---+-----+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 11\n",
+        "\n",
+        "data = [(1, None, 'ab'),\n",
+        "    (2, 10, None),\n",
+        "    (None, None, 'cd')]\n",
+        "columns = ['col1', 'col2', 'col3']\n",
+        "df = sp.createDataFrame(data, columns)\n",
+        "df.show()\n",
+        "df.withColumn('col1',when(col('col1').isNull(),1).otherwise('0'))"
+      ],
+      "metadata": {
+        "id": "x8jZ-x6SJS7y",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "d7a26c60-67e1-4988-cacc-cb25543c91f2"
+      },
+      "execution_count": 26,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+----+----+----+\n",
+            "|col1|col2|col3|\n",
+            "+----+----+----+\n",
+            "|   1|NULL|  ab|\n",
+            "|   2|  10|NULL|\n",
+            "|NULL|NULL|  cd|\n",
+            "+----+----+----+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Question 12\n",
+        "\n",
+        "data = [(101, 'IT', 1000), (102, 'HR', 900)]\n",
+        "columns = [\"empid\", \"dept\", \"salary\"]\n",
+        "df = sp.createDataFrame(data, columns)\n",
+        "df.show()\n",
+        "prefix=\"DE_\"\n",
+        "for c in df.columns:\n",
+        "  df=df.withColumnRenamed(c,prefix+c)\n",
+        "df.show()\n"
+      ],
+      "metadata": {
+        "id": "UhJw94lrJS-r",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "f8cd7b83-7324-41d4-e4a7-e4af283e1b48"
+      },
+      "execution_count": 13,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "+-----+----+------+\n",
+            "|empid|dept|salary|\n",
+            "+-----+----+------+\n",
+            "|  101|  IT|  1000|\n",
+            "|  102|  HR|   900|\n",
+            "+-----+----+------+\n",
+            "\n",
+            "+--------+-------+---------+\n",
+            "|DE_empid|DE_dept|DE_salary|\n",
+            "+--------+-------+---------+\n",
+            "|     101|     IT|     1000|\n",
+            "|     102|     HR|      900|\n",
+            "+--------+-------+---------+\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "vgJHAxjeJTBi"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "i3pdzL9UJTEf"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "s9nDtxtiJTHi"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "S5CdjkQ4JTKg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "RuXymCUwJTNb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "dRA3UV2CJTQW"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "XJYElGV2JTTV"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "ooQNvQNIJTWV"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "0B3JcA6NJTZb"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "pSqKDB7lJTcd"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "ktlCx6ICJTfg"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "91MSccg5JTiq"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "X9E-AndqJTl1"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "WWJ0szPuJTo5"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "XMRUeGOPJTr7"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "AL_x8-ccJTvV"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "kBhfPZ7PJTyZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "jUd7k8kCJT1k"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "ebscvPWoJT4o"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "mGvp67JhJT7z"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "g009GsdaJT_D"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "-BDl1ym1JUCd"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "e-CNWx0NJUFn"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "bcP4QiHAJUI_"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "I8eMsMMfJUMh"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
